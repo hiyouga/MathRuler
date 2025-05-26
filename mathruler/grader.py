@@ -315,7 +315,7 @@ def extract_boxed_content(text: str) -> str:
 
 
 def evaluate(json_path: str, verbose: bool = False):
-    n_correct, n_total = 0, 0
+    pass_n_correct, pass_n_total, avg_n_correct, avg_n_total = 0, 0, 0, 0
     with open(json_path, encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -324,13 +324,20 @@ def evaluate(json_path: str, verbose: bool = False):
         if "predicts" in sample:
             is_correct = False
             for predict in sample["predicts"]:
-                is_correct |= grade_answer(extract_boxed_content(predict), sample["answer"])
+                result = grade_answer(extract_boxed_content(predict), sample["answer"])
+                is_correct |= result
+                avg_n_correct += int(result)
+                avg_n_total += 1
         else:
             is_correct = grade_answer(extract_boxed_content(sample["solution"]), sample["answer"])
+            avg_n_correct += int(is_correct)
+            avg_n_total += 1
 
-        n_correct += int(is_correct)
-        n_total += 1
+        pass_n_correct += int(is_correct)
+        pass_n_total += 1
         if verbose and not is_correct:
             print(sample)
 
-    print(f"Accuracy: {n_correct}/{n_total} = {n_correct / n_total * 100:.2f}%.")
+    n = avg_n_total // pass_n_total
+    print(f"Pass@{n}: {pass_n_correct}/{pass_n_total} = {pass_n_correct / pass_n_total * 100:.2f}%.")
+    print(f"Avg@{n}: {avg_n_correct}/{avg_n_total} = {avg_n_correct / avg_n_total * 100:.2f}%.")
